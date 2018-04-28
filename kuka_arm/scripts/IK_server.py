@@ -104,10 +104,11 @@ def handle_calculate_IK(req):
             theta2 = pi / 2 - angle_a - atan2( WC[ 2 ] - 0.75, sqrt( WC[ 0 ] * WC[ 0 ] + WC[ 1 ] * WC[ 1 ] ) - 0.35 )
             theta3 = pi / 2 - ( angle_b + 0.036 ) # 0.036 = atan2( a3, d4 )
 
-            # Calculate rotation part for wrist center
+            # Calculate rotation part from 0 to 3
             R0_3 = T0_1[ 0 : 3, 0 : 3 ] * T1_2[ 0 : 3, 0 : 3 ] * T2_3[ 0 : 3, 0 : 3 ]
             R0_3 = R0_3.evalf( subs = { q1: theta1, q2: theta2, q3: theta3 } )
 
+            # Calculate rotation part from 3 to 6
             R3_6 = R0_3.inv('LU') * R_06
 
             ################################
