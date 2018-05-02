@@ -20,6 +20,7 @@
 [kr210_frames_URDF]: ./misc_images/kr210_frames_URDF.png
 [transform_eq]: ./misc_images/transform_eq.png
 [cal_theta]: ./misc_images/cal_theta.png
+[screenshot_8bins]: ./misc_images/Screenshot_8bins.png
 [screenshot1]: ./misc_images/Screenshot_1.png
 [screenshot2]: ./misc_images/Screenshot_2.png
 [screenshot3]: ./misc_images/Screenshot_3.png
@@ -111,11 +112,62 @@ def TF_Matrix( alpha, a, d, q ):
 	T2_3 = TF_Matrix( alpha2, a2, d3, q3 ).subs( DH_Table )
 	...
 ```
++ The final individual transformation matrices would be:
+```
+T0_1 = Matrix( [
+        [ cos( q1 ), - sin( q1 ),   0,     0 ],
+        [ sin( q1 ),   cos( q1 ),   0,     0 ],
+        [         0,           0,   1,  0.75 ],
+        [         0,           0,   0,     1 ]
+    ] )
+
+T1_2 = Matrix( [
+        [   cos( q2 - pi / 2 ),  - sin( q2 - pi / 2 ),    0,  0.35 ],
+        [                    0,                     0,    1,     0 ],
+        [ - sin( q2 - pi / 2 ),  - cos( q2 - pi / 2 ),    0,     0 ],
+        [                    0,                     0,    0,     1 ]
+    ] )
+
+T2_3 = Matrix( [
+        [ cos( q3 ), - sin( q3 ),     0,  1.25 ],
+        [ sin( q3 ),   cos( q3 ),     0,     0 ],
+        [         0,           0,     1,     0 ],
+        [         0,           0,     0,     1 ]
+    ] )
+
+T3_4 = Matrix( [
+        [   cos( q4 ),  - sin( q4 ),    0,  - 0.054 ],
+        [           0,            0,    1,     1.50 ],
+        [ - sin( q4 ),  - cos( q4 ),    0,        0 ],
+        [           0,            0,    0,        1 ]
+    ] )
+
+T4_5 = Matrix( [
+        [ cos( q5 ), - sin( q5 ),       0,     0 ],
+        [         0,           0,     - 1,     0 ],
+        [ sin( q5 ),   cos( q5 ),       0,     0 ],
+        [         0,           0,       0,     1 ]
+    ] )
+
+T5_6 = Matrix( [
+        [   cos( q6 ), - sin( q6 ),       0,      0 ],
+        [           0,           0,       1,      0 ],
+        [ - sin( q6 ), - cos( q6 ),       0,      0 ],
+        [           0,           0,       0,      1 ]
+    ] )
+
+T6_EE = Matrix( [
+        [ 1,  0,  0,      0 ],
+        [ 0,  1,  0,      0 ],
+        [ 0,  0,  1,  0.303 ],
+        [ 0,  0,  0,      1 ]
+    ] )
+```
 
 2. Generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 
 + The transform consist of two parts: Rotation part and Translation part.
-+ Rotation part can be calculated like this: R0_G = R_z(yaw) * R_y(pitch) * R_z(roll), roll, pitch, yaw could be extracted from pose of the gripper. This is a extrinsic rotaion of x_y_z or intrinsic of z_x_y.
++ Rotation part can be calculated like this: R0_G = R_z(yaw) * R_y(pitch) * R_z(roll), roll, pitch, yaw could be extracted from pose of the gripper. This is a extrinsic rotation of x_y_z or intrinsic of z_x_y.
 + Translation part is more easier, it's simply the position of the gripper: [px, py, pz].
 + So the whole transform will be: (R_T = R0_G)
 	![Transform equation][transform_eq]
@@ -177,11 +229,17 @@ theta6 = atan2( - R3_6[ 1, 1 ], R3_6[ 1, 0 ] )
 
 #### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results.
 
+1. I think i have discussed the code in the above section.
+2. I made 9 runs for pick & place, while 8 bins succeeded and 1 bin was outside the box because the dropping point is too close to the side of box.
+3. There were 2 times that the gripper almost knocked down the bin, fortunately the bin stood finally. I got to wait a little longer for the bin to stand still and then click 'next' to continue.
+4. Future improvements:
+  + When move the gripper to catch the bin, make the end effector parallel to the xy-plane, so that the gripper won't happen to knock down the bin.
+  + Check the end-point of gripper for the dropping point, make sure it's in the up-center of the bin, so that it won't be dropped outside.
 
-I think i have discussed the code in the above section.
+Here is the screenshot with 8 bins dropped in box.
+![screenshot of 8 bins][screenshot_8bins]
 
-
-Here are some screenshots for a pick-place action:
+Here are some screenshots for a single pick-place action:
 ![screenshot of pick and place][screenshot1]
 ![screenshot of pick and place][screenshot2]
 ![screenshot of pick and place][screenshot3]

@@ -32,7 +32,7 @@ def handle_calculate_IK(req):
         d1, d2, d3, d4, d5, d6, d7 = symbols( 'd1:8' )
         a0, a1, a2, a3, a4, a5, a6 = symbols( 'a0:7' )
         alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols( 'alpha0:7' )
-        
+
         # Create Modified DH parameters
         DH_Table = {
             alpha0:        0, a0:       0, d1:  0.75, q1:          q1,
@@ -43,7 +43,7 @@ def handle_calculate_IK(req):
             alpha5: - pi / 2, a5:       0, d6:     0, q6:          q6,
             alpha6:        0, a6:       0, d7: 0.303, q7:           0
         }
-        
+
         # Define Modified DH Transformation matrix
         # Create individual transformation matrices
         T0_1 = TF_Matrix( alpha0, a0, d1, q1 ).subs( DH_Table )
@@ -76,6 +76,11 @@ def handle_calculate_IK(req):
             (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
                 [req.poses[x].orientation.x, req.poses[x].orientation.y,
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
+
+            rospy.loginfo( '============== Request ===============' )
+            rospy.loginfo( 'position: %.2f, %.2f, %.2f', px, py, pz )
+            rospy.loginfo( 'orientation: %.2f, %.2f, %.2f', roll, pitch, yaw )
+            rospy.loginfo( '========== End of Request ============' )
 
             ### Your IK code here
             R_06 = R_06.subs( { r: roll, p: pitch, y: yaw } )
@@ -114,13 +119,13 @@ def handle_calculate_IK(req):
             ################################
             ### Extract R3_6 from T3_4 * T4_5 * T5_6:
             # R3_6 = Matrix([
-            #     [-sin(q4)*sin(q6) + cos(q4)*cos(q5)*cos(q6), 
+            #     [-sin(q4)*sin(q6) + cos(q4)*cos(q5)*cos(q6),
             #         -sin(q4)*cos(q6) - sin(q6)*cos(q4)*cos(q5),
-            #             -sin(q5)*cos(q4)], 
-            #     [sin(q5)*cos(q6), -sin(q5)*sin(q6), cos(q5)], 
-            #     [-sin(q4)*cos(q5)*cos(q6) - sin(q6)*cos(q4), 
-            #         sin(q4)*sin(q6)*cos(q5) - cos(q4)*cos(q6), 
-            #             sin(q4)*sin(q5)], 
+            #             -sin(q5)*cos(q4)],
+            #     [sin(q5)*cos(q6), -sin(q5)*sin(q6), cos(q5)],
+            #     [-sin(q4)*cos(q5)*cos(q6) - sin(q6)*cos(q4),
+            #         sin(q4)*sin(q6)*cos(q5) - cos(q4)*cos(q6),
+            #             sin(q4)*sin(q5)],
             # ])
             ################################
 
@@ -133,7 +138,14 @@ def handle_calculate_IK(req):
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
-            joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
+            joint_trajectory_point.positions = [
+                Limit_Theta( theta1, -185, 185 ),
+                Limit_Theta( theta2, -45, 85 ),
+                Limit_Theta( theta3, -210, 65 ),
+                Limit_Theta( theta4, -350, 350 ),
+                Limit_Theta( theta5, -125, 125 ),
+                Limit_Theta( theta6, -350, 350 )
+            ]
             joint_trajectory_list.append(joint_trajectory_point)
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
@@ -155,6 +167,17 @@ def TF_Matrix( alpha, a, d, q ):
             [                       0,                       0,              0,                  1 ]
         ] )
     return TF
+
+def Limit_Theta( theta, lower, upper ):
+    deg = 0.017453293 # degrees to radians
+    old = theta
+    while theta < lower * deg:
+        theta = theta + pi
+    while theta > upper * deg:
+        theta = theta - pi
+    _ = '-' if theta == old else '*'
+    rospy.loginfo( "====> Theta[%s]: %.2f + [%.2f ~ %.2f] = %.2f", _, old / deg, lower, upper, theta / deg )
+    return float( theta )
 
 # Rotation matrix for roll-pitch-yaw
 def ROT_06( r, p, y ):
