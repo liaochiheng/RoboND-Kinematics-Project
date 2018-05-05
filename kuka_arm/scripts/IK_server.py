@@ -102,6 +102,11 @@ def handle_calculate_IK(req):
                 + pow( WC[ 2 ] - 0.75, 2 ) )
             side_c = 1.25
 
+            ### TODO: improvements:
+            # 1. Instead of arcos or arctan, we use to use arctan2 which has better angle properties than arcos or even arctan (https://en.wikipedia.org/wiki/Atan2)
+            # 2. Also to inverse the kinematics, is you use transpose instead of .inv("LU"), as it is highly more effective, you should reach better performance.
+            # 3. Use numpy instead of sympy, to increase the speed of operation
+
             angle_a = acos( ( side_b * side_b + side_c * side_c - side_a * side_a ) / ( 2 * side_b * side_c ) )
             angle_b = acos( ( side_a * side_a + side_c * side_c - side_b * side_b ) / ( 2 * side_a * side_c ) )
             angle_c = acos( ( side_a * side_a + side_b * side_b - side_c * side_c ) / ( 2 * side_a * side_b ) )
